@@ -43,8 +43,11 @@ object Main extends App {
   val endCond = (a: Double) => a < 1
   val s1 = QuickSplitUntil(n, splitFun, endCond)
   val s2 = n.splitUntil(splitFun, endCond)
+  val s3 = SplitUntil(n, splitFun, endCond)
   val res1 = s1(10)
   val res2 = s2(10)
+  val res3 = s3(10)
   println(res1)
   println(res2)
+  println(res3)
 }

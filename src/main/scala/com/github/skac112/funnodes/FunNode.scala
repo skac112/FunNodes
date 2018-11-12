@@ -20,7 +20,7 @@ object FunNode {
     */
   def chain[M[_]: Monad, A, B, C](n1: FunNode[M, A, B], n2: FunNode[M, C, A]): FunNode[M, C, B] = QuickNode[M, C, B](n1.k.compose(n2.k).run)
 
-  def chainUntil[M[_] : Monad, A, B](n: FunNode[M, A, B], endCond: M[B] => Boolean)(implicit ev: B <:< A) = ChainUntil(n, endCond)
+  def chainUntil[M[_] : Monad, A, B](n: FunNode[M, A, B], endCond: B => Boolean)(implicit ev: B <:< A) = ChainUntil[M, A, B](n, endCond)
 
   def branch[M[_] : Monad, A, B](n: FunNode[M, A, B], splitFun: SplitFun[A, B])(implicit ev: A <:< B) = Branch(n, splitFun)
 
@@ -53,7 +53,10 @@ object FunNode {
     Split(n1, n2, splitFun)
 
   def splitUntil[M[_] : Monad, A, B](n: FunNode[M, A, B], splitFun: SplitFun[A, B], endCond: A => Boolean) =
-    QuickSplitUntil(n, splitFun, endCond)
+    SplitUntil(n, splitFun, endCond)
+
+  def splitWhile[M[_]: Monad, A, B](n: FunNode[M, A, B], splitFun: SplitFun[A, B], whileCond: A => Boolean) =
+    SplitWhile(n, splitFun, whileCond)
 
   def mSplit[M[_]: Monad, A, B](n1: FunNode[M, A, B], n2: FunNode[M, A, B], mSplitFun: MSplitFun[M, A, B]): FunNode[M, A, B] = {
     val ff: A => M[B] = (flux: A) => {
@@ -132,10 +135,12 @@ abstract class FunNode[M[_] : Monad, A, B] extends Function1[A, M[B]] {
     * @return
     */
   def chain[C](other: FunNode[M, C, A]): FunNode[M, C, B] = FunNode.chain(this, other)
-  def chainUntil(endCond: M[B] => Boolean)(implicit ev: B <:< A) = FunNode.chainUntil(this, endCond)
+  def chainUntil(endCond: B => Boolean)(implicit ev: B <:< A) = FunNode.chainUntil(this, endCond)
   def split(other: FunNode[M, A, B], splitFun: SplitFun[A,B]) = FunNode.split(this, other, splitFun)
-  def splitUntil(splitFun: SplitFun[A, B], endCond: A => Boolean): FunNode[M, A, B] = FunNode.splitUntil(this, splitFun, endCond)
+  def splitUntil(splitFun: SplitFun[A, B], endCond: A => Boolean) = FunNode.splitUntil(this, splitFun, endCond)
+  def splitWhile(splitFun: SplitFun[A, B], whileCond: A => Boolean) = FunNode.splitWhile(this, splitFun, whileCond)
   def branch(splitFun: SplitFun[A,B])(implicit ev: A <:< B) = FunNode.branch(this, splitFun)
   def branchUntil(splitFun: SplitFun[A, A], endCond: A => Boolean)(implicit ev: A =:= B) =
     FunNode.branchUntil[M, A](this.asInstanceOf[FunNode[M, A, A]], splitFun, endCond)
+
 }

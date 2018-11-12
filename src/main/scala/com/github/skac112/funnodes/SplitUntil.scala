@@ -6,8 +6,17 @@ import cats.implicits._
 import FunNode._
 
 object SplitUntil {
-  case class QuickSplitUntil[M[_] : Monad, A, B](override val n: FunNode[M, A, B], override val splitFun: SplitFun[A, B],
-                                                 override val endCond: A => Boolean) extends SplitUntil[M, A, B]
+
+  case class QuickSplitUntil[M[_] : Monad, A, B](override val n: FunNode[M, A, B],
+                                                 aSplitFun: SplitFun[A, B],
+                                                 aEndCond: A => Boolean)
+    extends SplitUntil[M, A, B] {
+    override def splitFun(flux: A) = aSplitFun(flux)
+    override def endCond(flux: A) = aEndCond(flux)
+  }
+
+  def apply[M[_]: Monad, A, B](n: FunNode[M, A, B], splitFun: SplitFun[A, B], endCond: A => Boolean) =
+    QuickSplitUntil(n, splitFun, endCond)
 }
 
 /**
@@ -27,8 +36,8 @@ object SplitUntil {
   */
 abstract class SplitUntil[M[_] : Monad, A, B] extends FunNode[M, A, B] {
   def n: FunNode[M, A, B]
-  def splitFun: SplitFun[A, B]
-  def endCond: A => Boolean
+  def splitFun(flux: A): SplitMerge[A, B]
+  def endCond(flux: A): Boolean
 
   override def apply(flux: A): M[B] = {
     val (fx1, fx2, merge_fun) = splitFun(flux)
