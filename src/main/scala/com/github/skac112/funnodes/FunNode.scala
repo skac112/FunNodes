@@ -75,9 +75,9 @@ object FunNode {
         tail map {arg: (FunNode[M, A, B], SplitFun[A, B]) => arg._2}), splitFun)
     }
 
-  def splitOne[M[_]: Monad, A, B](n: FunNode[M, A, B], times: Int, splitFun: SplitFun[A, B]): FunNode[M, A, B] = times match {
+  def splitTimes[M[_]: Monad, A, B](n: FunNode[M, A, B], splitFun: SplitFun[A, B], times: Int): FunNode[M, A, B] = times match {
     case 1 => split(n, n, splitFun)
-    case _ => split(n, splitOne(n, times - 1, splitFun), splitFun)
+    case _ => split(n, splitTimes(n, splitFun, times - 1), splitFun)
   }
 
   /**
@@ -137,10 +137,10 @@ abstract class FunNode[M[_] : Monad, A, B] extends Function1[A, M[B]] {
   def chain[C](other: FunNode[M, C, A]): FunNode[M, C, B] = FunNode.chain(this, other)
   def chainUntil(endCond: B => Boolean)(implicit ev: B <:< A) = FunNode.chainUntil(this, endCond)
   def split(other: FunNode[M, A, B], splitFun: SplitFun[A,B]) = FunNode.split(this, other, splitFun)
+  def splitTimes(splitFun: SplitFun[A, B], times: Int) = FunNode.splitTimes(this, splitFun, times)
   def splitUntil(splitFun: SplitFun[A, B], endCond: A => Boolean) = FunNode.splitUntil(this, splitFun, endCond)
   def splitWhile(splitFun: SplitFun[A, B], whileCond: A => Boolean) = FunNode.splitWhile(this, splitFun, whileCond)
   def branch(splitFun: SplitFun[A,B])(implicit ev: A <:< B) = FunNode.branch(this, splitFun)
   def branchUntil(splitFun: SplitFun[A, A], endCond: A => Boolean)(implicit ev: A =:= B) =
     FunNode.branchUntil[M, A](this.asInstanceOf[FunNode[M, A, A]], splitFun, endCond)
-
 }

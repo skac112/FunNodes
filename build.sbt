@@ -1,5 +1,5 @@
 name := "funnodes"
-version := "0.0.1-SNAPSHOT"
+version := "0.0.2-SNAPSHOT"
 scalaVersion := "2.12.3"
 exportJars := true
 organization := "skac"
